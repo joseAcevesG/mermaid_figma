@@ -1,0 +1,17 @@
+{
+  "name": "Mermaid FigJam Suite",
+  "id": "mermaid-figjam-suite",
+  "api": "1.0.0",
+  "editorType": ["figjam"],
+  "main": "dist/plugin/main.js",
+  "ui": "dist/plugin/ui.html",
+  "containsWidget": true,
+  "widgetApi": "1.0.0",
+  "widgets": [
+    {
+      "id": "mermaid-widget",
+      "name": "MermaidWidget",
+      "main": "dist/widget/code.js"
+    }
+  ]
+}

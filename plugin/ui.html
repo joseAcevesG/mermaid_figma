@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mermaid Project Importer</title>
+    <style>
+      body {
+        font-family: Inter, Arial, sans-serif;
+        margin: 0;
+        padding: 16px;
+        background: #f5f5f5;
+        color: #111;
+      }
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        margin-top: 8px;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+      }
+      .row {
+        margin-bottom: 12px;
+      }
+      button {
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      label {
+        font-weight: 600;
+      }
+      input[type="file"] {
+        margin-top: 6px;
+      }
+      .error {
+        color: #c00;
+        margin-top: 8px;
+      }
+      .success {
+        color: #0a7a0a;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Mermaid Project Importer</h2>
+    <div class="row">
+      <label for="json-input">Paste MermaidProject JSON</label>
+      <textarea id="json-input" placeholder='{ "Folder": { "file.mmd": "graph TD;" } }'></textarea>
+    </div>
+    <div class="row">
+      <label for="file-input">Or upload a .json file</label>
+      <input id="file-input" type="file" accept="application/json" />
+    </div>
+    <div class="row">
+      <button id="import-btn">Import JSON</button>
+    </div>
+    <div id="status"></div>
+    <script type="module" src="./ui.js"></script>
+  </body>
+</html>

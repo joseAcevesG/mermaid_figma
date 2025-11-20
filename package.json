@@ -1,0 +1,24 @@
+{
+  "name": "mermaid-figma-suite",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:plugin": "esbuild plugin/src/main.ts --bundle --outfile=dist/plugin/main.js --format=esm --target=es2018 --platform=browser && esbuild plugin/src/ui.ts --bundle --outfile=dist/plugin/ui.js --format=esm --target=es2018 --platform=browser && cp plugin/ui.html dist/plugin/ui.html",
+    "build:widget": "esbuild widget/src/index.tsx --bundle --outfile=dist/widget/code.js --format=esm --target=es2018 --platform=browser --jsx=transform --jsx-factory=figma.widget.h --jsx-fragment=figma.widget.Fragment",
+    "build": "npm run clean && npm run build:plugin && npm run build:widget",
+    "dev:plugin": "esbuild plugin/src/main.ts --bundle --outfile=dist/plugin/main.js --format=esm --target=es2018 --platform=browser --watch",
+    "dev:ui": "esbuild plugin/src/ui.ts --bundle --outfile=dist/plugin/ui.js --format=esm --target=es2018 --platform=browser --watch",
+    "dev:widget": "esbuild widget/src/index.tsx --bundle --outfile=dist/widget/code.js --format=esm --target=es2018 --platform=browser --watch --jsx=transform --jsx-factory=figma.widget.h --jsx-fragment=figma.widget.Fragment",
+    "dev": "npm run build && echo 'Watching not configured; run dev:* scripts individually as needed.'"
+  },
+  "dependencies": {
+    "mermaid": "^10.9.0"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.119.0",
+    "@figma/widget-typings": "^1.12.1",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.4.5"
+  }
+}
