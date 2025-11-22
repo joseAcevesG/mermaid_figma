@@ -5,13 +5,7 @@
   "editorType": ["figjam"],
   "main": "dist/plugin/main.js",
   "ui": "dist/plugin/ui.html",
-  "containsWidget": true,
-  "widgetApi": "1.0.0",
-  "widgets": [
-    {
-      "id": "mermaid-widget",
-      "name": "MermaidWidget",
-      "main": "dist/widget/code.js"
-    }
-  ]
+  "networkAccess": {
+    "allowedDomains": ["https://cdn.jsdelivr.net"]
+  }
 }
