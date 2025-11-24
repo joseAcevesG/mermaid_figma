@@ -25,6 +25,13 @@
         padding: 8px 12px;
         font-size: 14px;
         cursor: pointer;
+        background: #18a0fb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+      }
+      button:hover {
+        background: #0d8de8;
       }
       button:disabled {
         opacity: 0.5;
@@ -48,27 +55,29 @@
         color: #666;
         margin-top: 8px;
       }
+      .hint {
+        font-size: 12px;
+        color: #888;
+        margin-top: 4px;
+      }
     </style>
-    <!-- Load mermaid from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   </head>
   <body>
     <h2>Mermaid Project Importer</h2>
+    <p class="hint">Generate JSON using: <code>node scripts/generate-project.js ./your-folder</code></p>
+
     <div class="row">
       <label for="json-input">Paste MermaidProject JSON</label>
-      <textarea id="json-input" placeholder='{ "Folder": { "file.mmd": "graph TD; A-->B;" } }'></textarea>
+      <textarea id="json-input" placeholder='{ "Folder": { "file.mmd": { "code": "...", "nodes": [...], "edges": [...] } } }'></textarea>
     </div>
     <div class="row">
       <label for="file-input">Or upload a .json file</label>
       <input id="file-input" type="file" accept="application/json" />
     </div>
     <div class="row">
-      <button id="import-btn">Import JSON</button>
+      <button id="import-btn">Import to FigJam</button>
     </div>
     <div id="status"></div>
-
-    <!-- Hidden container for mermaid rendering -->
-    <div id="mermaid-container" style="position: absolute; left: -9999px; top: 0;"></div>
 
     <script>
       console.log("[DEBUG] UI script starting");
@@ -77,22 +86,6 @@
       var fileInput = document.getElementById("file-input");
       var importBtn = document.getElementById("import-btn");
       var statusNode = document.getElementById("status");
-      var mermaidContainer = document.getElementById("mermaid-container");
-
-      var mermaidReady = false;
-
-      // Initialize mermaid
-      try {
-        mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: 'loose',
-          theme: 'default'
-        });
-        mermaidReady = true;
-        console.log("[DEBUG] Mermaid initialized");
-      } catch (e) {
-        console.error("[DEBUG] Mermaid init failed:", e);
-      }
 
       function setStatus(message, kind) {
         kind = kind || "info";
@@ -130,74 +123,28 @@
         });
       }
 
-      // Render mermaid code to SVG
-      function renderMermaid(code, id) {
-        return new Promise(function(resolve, reject) {
-          if (!mermaidReady) {
-            reject(new Error("Mermaid not ready"));
-            return;
-          }
-
-          try {
-            // Create a container for this render
-            var container = document.createElement("div");
-            container.id = id;
-            mermaidContainer.appendChild(container);
-
-            mermaid.render(id, code, container).then(function(result) {
-              console.log("[DEBUG] Rendered " + id + ", SVG length: " + result.svg.length);
-              // Clean up
-              mermaidContainer.removeChild(container);
-              // Also remove any leftover elements mermaid might have created
-              var leftover = document.getElementById(id);
-              if (leftover) leftover.remove();
-
-              resolve(result.svg);
-            }).catch(function(err) {
-              console.error("[DEBUG] Mermaid render error for " + id + ":", err);
-              mermaidContainer.removeChild(container);
-              reject(err);
-            });
-          } catch (e) {
-            console.error("[DEBUG] Mermaid sync error:", e);
-            reject(e);
-          }
-        });
-      }
-
-      function processProject(project) {
-        console.log("[DEBUG] Processing project...");
-        var processedProject = {};
-        var promises = [];
-        var renderCount = 0;
+      function countItems(project) {
+        var folders = 0;
+        var files = 0;
+        var nodes = 0;
+        var edges = 0;
 
         for (var folderName in project) {
-          var files = project[folderName];
-          processedProject[folderName] = {};
-
-          for (var fileName in files) {
-            (function(fn, folder, content) {
-              var code = typeof content === "string" ? content : content.code;
-              var id = "mermaid-render-" + (renderCount++);
-
-              var promise = renderMermaid(code, id).then(function(svg) {
-                processedProject[folder][fn] = { code: code, svg: svg };
-                console.log("[DEBUG] Processed: " + folder + "/" + fn);
-              }).catch(function(err) {
-                console.error("[DEBUG] Failed to render " + fn + ":", err);
-                // Still include the file with empty SVG
-                processedProject[folder][fn] = { code: code, svg: "" };
-              });
-
-              promises.push(promise);
-            })(fileName, folderName, files[fileName]);
+          folders++;
+          var folderFiles = project[folderName];
+          for (var fileName in folderFiles) {
+            files++;
+            var content = folderFiles[fileName];
+            if (content && content.nodes) {
+              nodes += content.nodes.length;
+            }
+            if (content && content.edges) {
+              edges += content.edges.length;
+            }
           }
         }
 
-        return Promise.all(promises).then(function() {
-          console.log("[DEBUG] All diagrams processed");
-          return processedProject;
-        });
+        return { folders: folders, files: files, nodes: nodes, edges: edges };
       }
 
       function importProject() {
@@ -225,25 +172,27 @@
       function doImport(jsonText) {
         try {
           setStatus("Parsing project...", "info");
-          var rawProject = parseProject(jsonText);
-          console.log("[DEBUG] Parsed folders:", Object.keys(rawProject));
+          var project = parseProject(jsonText);
+          console.log("[DEBUG] Parsed folders:", Object.keys(project));
 
-          setStatus("Rendering mermaid diagrams...", "info");
-          processProject(rawProject).then(function(processedProject) {
-            var message = {
-              type: "import-project",
-              payload: processedProject
-            };
+          var counts = countItems(project);
+          console.log("[DEBUG] Counts:", counts);
 
-            console.log("[DEBUG] Sending to plugin");
-            parent.postMessage({ pluginMessage: message }, "*");
-            setStatus("Diagrams sent to FigJam!", "success");
-            importBtn.disabled = false;
+          var message = {
+            type: "import-project",
+            payload: project
+          };
 
-          }).catch(function(err) {
-            setStatus("Error processing: " + err.message, "error");
-            importBtn.disabled = false;
-          });
+          console.log("[DEBUG] Sending to plugin");
+          parent.postMessage({ pluginMessage: message }, "*");
+
+          setStatus(
+            "Sent to FigJam: " + counts.folders + " folders, " +
+            counts.files + " files, " + counts.nodes + " nodes, " +
+            counts.edges + " connectors",
+            "success"
+          );
+          importBtn.disabled = false;
 
         } catch (error) {
           console.error("[DEBUG] Import failed:", error);
@@ -259,7 +208,7 @@
         console.log("[DEBUG] Click handler attached");
       }
 
-      setStatus(mermaidReady ? "Ready. Paste JSON or upload a file, then click Import." : "Loading mermaid...", "info");
+      setStatus("Ready. Paste JSON or upload a file, then click Import.", "info");
       console.log("[DEBUG] UI script complete");
     </script>
   </body>
