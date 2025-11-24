@@ -1,9 +1,0 @@
-{
-  "Folder A": {
-    "diagram1.mmd": "graph TD; A-->B;",
-    "diagram2.mmd": "sequenceDiagram\nA->>B: Hello"
-  },
-  "Folder B": {
-    "another.mmd": "flowchart LR; X-->Y;"
-  }
-}
